@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/home/elbatista/MEGAsync/Mestrado/Dissertacao/bft-smart_parallel/src/demo/list/ListServerMP.java</file>
+            <file>file:/home/elbatista/MEGAsync/Mestrado/Dissertacao/bft-smart_parallel/src/demo/list/MultipartitionMapping.java</file>
+            <file>file:/home/elbatista/MEGAsync/Mestrado/Dissertacao/bft-smart_parallel/src/parallelism/ClassToThreads.java</file>
+            <file>file:/home/elbatista/MEGAsync/Mestrado/Dissertacao/bft-smart_parallel/src/parallelism/ParallelMapping.java</file>
+            <file>file:/home/elbatista/MEGAsync/Mestrado/Dissertacao/bft-smart_parallel/src/parallelism/ParallelServiceReplica.java</file>
+            <file>file:/home/elbatista/MEGAsync/Mestrado/Dissertacao/bft-smart_parallel/src/parallelism/scheduler/DefaultScheduler.java</file>
+        </group>
+    </open-files>
+</project-private>
