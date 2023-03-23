@@ -16,38 +16,21 @@
  */
 package demo.list;
 
-//import bftsmart.tom.parallelism.ParallelMapping;
 import java.io.IOException;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-//import bftsmart.tom.ServiceProxy;
-//import bftsmart.tom.core.messages.TOMMessageType;
-import bftsmart.tom.util.Storage;
 import bftsmart.util.ExtStorage;
 import bftsmart.util.RealDistExponential;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 
-/**
- * Example client
- *
- */
 public class ListClientMOMP {
 
     public static int initId = 0;
-
     public static int op = BFTList.ADD, writePercent = 15, globalPercent = 5;
     public static boolean mix = true, skewed=false;
-
     public static boolean weight = false;
-
     public static boolean stop = false, distExpo = false;
     static long cmds=0, sync=0;
     
@@ -65,23 +48,25 @@ public class ListClientMOMP {
         int numThreads = Integer.parseInt(aargs[0]);
         initId = Integer.parseInt(aargs[1]);
 
-        /*if (initId == 7001 || initId == 1001 || initId == 2001) {
-
-            op = BFTList.ADD;
-        }*/
-
-        int numberOfReqs = 1000000;//Integer.parseInt(args[2]);
+        int numberOfReqs = 1000000000;//Integer.parseInt(args[2]);
         //int requestSize = Integer.parseInt(args[3]);
         int interval = 0;//Integer.parseInt(args[2]);
         int max = Integer.parseInt(aargs[2]);
         boolean parallel = true;//Boolean.parseBoolean(args[4]);
+
+        ///  ELIA
+        /// Alterado aqui de 50 para outros valores, para testar os tempos de execucao de comando
         int numberOfOps = 50;//Integer.parseInt(args[5]);
+
+
+        
         int p = Integer.parseInt(aargs[3]);
         skewed = Boolean.parseBoolean(aargs[4]);
         writePercent = Integer.parseInt(aargs[5]);
         globalPercent = Integer.parseInt(aargs[6]);
         distExpo = Boolean.parseBoolean(aargs[7]);
         String algo = aargs[9];
+        numberOfOps = Integer.parseInt(aargs[10]);
 
         Client[] c = new Client[numThreads];
 
@@ -107,20 +92,6 @@ public class ListClientMOMP {
 
             c[i].start();
         }
-        
-            
-
-//        (new Timer()).scheduleAtFixedRate(new TimerTask() {
-//            public void run() {
-//                //change();
-//            }
-//        }, 60000, 60000); //a cada 1 minuto
-//
-//        (new Timer()).schedule(new TimerTask() {
-//            public void run() {
-//                stop();
-//            }
-//        }, 5 * 60000); //depois de 5 minutos
 
         for (int i = 0; i < numThreads; i++) {
 
@@ -131,7 +102,6 @@ public class ListClientMOMP {
             }
         }
 
-        //System.exit(0);
     }
 
     public static void stop() {
@@ -151,20 +121,10 @@ public class ListClientMOMP {
         int id;
         int numberOfReqs;
         int interval;
-
         int countNumOp = 0;
-
-        //boolean verbose;
-        //boolean dos;
-        //ServiceProxy proxy;
-        //byte[] request;
         BFTListMOMP<Integer> store;
-
         int maxIndex;
-        //int percent;
-
         int opPerReq = 1;
-
         int partitions = 2;
         ExtStorage sR = new ExtStorage();
         ExtStorage sW = new ExtStorage();
@@ -177,60 +137,47 @@ public class ListClientMOMP {
             this.id = id;
             this.numberOfReqs = numberOfRqs;
             this.opPerReq = opPerReq;
-
             this.interval = interval;
-
             this.partitions = partitions;
-
-            //this.verbose = false;
-            //this.proxy = new ServiceProxy(id);
-            //this.request = new byte[this.requestSize];
             this.maxIndex = maxIndex;
-
             store = new BFTListMOMP<Integer>(id, parallel);
-            //this.dos = dos;
-            try {
-                Files.delete(Paths.get("latency_"+algo+"_"+initId+".txt"));
-            } catch (IOException ex) {
-                //Logger.getLogger(ListClientMOMP.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            
-            if (id == initId) {
-                (new Timer()).scheduleAtFixedRate(new TimerTask() {
-                    public void run() {
-                        
-                        System.out.println("Clients syncs: "+sync +" / " + cmds +" = "+((100 * sync) / (cmds > 0 ? cmds : 1))+"%");
 
-                        try {
-                            Files.write(
-                                Paths.get("latency_"+algo+"_"+initId+".txt"),
-                                (
-                                    (sR.getAverage(true) / 1000) + "\t" + (sR.getDP(true) / 1000) + "\t" + 
-                                    (sW.getAverage(true) / 1000) + "\t" + (sW.getDP(true) / 1000) + "\t" + 
-                                    (sGR.getAverage(true) / 1000) + "\t" + (sGR.getDP(true) / 1000) + "\t" + 
-                                    (sGW.getAverage(true) / 1000) + "\t" + (sGW.getDP(true) / 1000) + "\r\n"
-                                ).getBytes(StandardCharsets.UTF_8),
-                                StandardOpenOption.CREATE,StandardOpenOption.APPEND
-                            );
-                        } catch (IOException ex) {
-                            //Logger.getLogger(ListClientMOMP.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    }
-                }, 10000, 3000);
-            }
+            // try {
+            //     Files.delete(Paths.get("latency_"+algo+"_"+initId+".txt"));
+            // } catch (IOException ex) {
+            //     //Logger.getLogger(ListClientMOMP.class.getName()).log(Level.SEVERE, null, ex);
+            // }
+            
+            // if (id == initId) {
+            //     (new Timer()).scheduleAtFixedRate(new TimerTask() {
+            //         public void run() {
+                        
+            //             //System.out.println("Clients syncs: "+sync +" / " + cmds +" = "+((100 * sync) / (cmds > 0 ? cmds : 1))+"%");
+
+            //             try {
+            //                 Files.write(
+            //                     Paths.get("latency_"+algo+"_"+initId+".txt"),
+            //                     (
+            //                         (sR.getAverage(true) / 1000) + "\t" + (sR.getDP(true) / 1000) + "\t" + 
+            //                         (sW.getAverage(true) / 1000) + "\t" + (sW.getDP(true) / 1000) + "\t" + 
+            //                         (sGR.getAverage(true) / 1000) + "\t" + (sGR.getDP(true) / 1000) + "\t" + 
+            //                         (sGW.getAverage(true) / 1000) + "\t" + (sGW.getDP(true) / 1000) + "\r\n"
+            //                     ).getBytes(StandardCharsets.UTF_8),
+            //                     StandardOpenOption.CREATE,StandardOpenOption.APPEND
+            //                 );
+            //             } catch (IOException ex) {
+            //                 //Logger.getLogger(ListClientMOMP.class.getName()).log(Level.SEVERE, null, ex);
+            //             }
+            //         }
+            //     }, 10000, 3000);
+            // }
             
         }
-
-        /*  private boolean insertValue(int index) {
-
-            return store.add(index);
-
-        }*/
         
         public void runDistExp(){
             int p = 0;
 
-            System.out.println((skewed?"Skewed e":"E")+"xperiment (expo. distr.) for " + partitions + " shards; "+writePercent+"% writes; "+globalPercent+"% global");
+            System.out.println((skewed?"Skewed e":"E")+"xperiment (expo. distr.) for " + partitions + " shards; "+writePercent+"% writes; "+globalPercent+"% global; ops per req: "+opPerReq);
 
             Random rand = new Random();
             Random randGlobal = new Random();
@@ -454,10 +401,9 @@ public class ListClientMOMP {
             }
         }
         
+        @Override
         public void run() {
 
-            //System.out.println("Warm up...");
-            //int req = 0;
             if (weight) {
                 weighting();
             } else if(distExpo){
@@ -465,23 +411,16 @@ public class ListClientMOMP {
             } else {
                 int p = 0;
                 
-                
-
                 System.out.println((skewed?"Skewed e":"E")+"xperiment for " + partitions + " shards; "+writePercent+"% writes; "+globalPercent+"% global");
 
                 Random rand = new Random();
-
                 Random randOp = new Random();
-
                 Random randGlobal = new Random();
-
                 Random indexRand = new Random();
 
-//            WorkloadGenerator work = new WorkloadGenerator(numberOfOps);
                 for (int i = 0; i < numberOfReqs && !stop; i++) {
                     if (i == 1) {
                         try {
-                            //Thread.currentThread().sleep(20000);
                             Thread.currentThread().sleep(2000);
                         } catch (InterruptedException ex) {
                             Logger.getLogger(ListClientMOMP.class.getName()).log(Level.SEVERE, null, ex);
@@ -623,17 +562,11 @@ public class ListClientMOMP {
                         }
                     }
 
-                    /*if(op == BFTList.ADD){
-                      p = 2;
-                  }else{
-                      p = 1;
-                  }*/
+
                     if (p == -1) { //GW
-                        //int index = maxIndex - 1;
 
                         Integer[] reqs = new Integer[opPerReq];
                         for (int x = 0; x < reqs.length; x++) {
-                            //reqs[x] = index;
                             reqs[x] = indexRand.nextInt(maxIndex);
                         }
                         long last_send_instant = System.nanoTime();
@@ -641,11 +574,9 @@ public class ListClientMOMP {
                         if (id == initId) sync++;
                         sGW.store(System.nanoTime() - last_send_instant);
                     } else if (p == -2) {//GR
-                        //int index = maxIndex - 1;
 
                         Integer[] reqs = new Integer[opPerReq];
                         for (int x = 0; x < reqs.length; x++) {
-                            //reqs[x] = index;
                             reqs[x] = indexRand.nextInt(maxIndex);
                         }
                         long last_send_instant = System.nanoTime();
@@ -653,11 +584,8 @@ public class ListClientMOMP {
                         sGR.store(System.nanoTime() - last_send_instant);
                     } else if (op == BFTList.ADD) {
 
-                        //int index = rand.nextInt(maxIndex);
-                        //int index = maxIndex - 1;
                         Integer[] reqs = new Integer[opPerReq];
                         for (int x = 0; x < reqs.length; x++) {
-                            //  reqs[x] = index;
                             reqs[x] = indexRand.nextInt(maxIndex);
                         }
 
@@ -724,9 +652,6 @@ public class ListClientMOMP {
                     
                     if (id == initId) cmds++;
 
-                    /* if (verbose && (req % 1000 == 0)) {
-                    System.out.println(this.id + " // " + req + " operations sent!");
-                }*/
                 }
 
                 if (id == initId) {

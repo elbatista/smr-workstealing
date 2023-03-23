@@ -26,6 +26,8 @@ hs_err_pid*
 
 results*
 stealMatrix*
+*rep*_thread*.txt
+seq*rep0.txt
 
 .DS_Store
 

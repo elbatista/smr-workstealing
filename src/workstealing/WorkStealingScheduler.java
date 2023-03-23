@@ -44,6 +44,7 @@ public class WorkStealingScheduler extends DefaultScheduler{
             //totalCmds++;
             //conc
             if(ct.type == ClassToThreads.CONC){
+                request.scheduledTime = System.nanoTime();
                 ((WorkStealingFIFOQueue)ct.queues[ct.executorIndex]).put(request);
                 ct.executorIndex = (ct.executorIndex+1)% ct.queues.length;
             }
@@ -56,6 +57,7 @@ public class WorkStealingScheduler extends DefaultScheduler{
 //                    }
 //                }
                 //totalConcCmds=0;
+                request.scheduledTime = System.nanoTime();
                 for (BlockingQueue q : ct.queues) ((WorkStealingFIFOQueue)q).putSync(request);
             }
             

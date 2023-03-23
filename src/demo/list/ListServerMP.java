@@ -38,7 +38,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
-
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -97,7 +98,7 @@ public final class ListServerMP implements SingleExecutable {
         if (initThreads <= 0) {
             System.out.println("Replica in sequential execution model.");
 
-            replica = new SequentialServiceReplica(id, this, null, duration, warmup);
+            replica = new SequentialServiceReplica(id, this, null, duration, warmup, entries);
         } else if (cbase) {
             System.out.println("Replica in parallel execution model (CBASE).");
             ConflictDefinition cd = new ConflictDefinition() {
@@ -235,113 +236,113 @@ public final class ListServerMP implements SingleExecutable {
             } else if (numberPartitions == 2) {
                 if (initThreads == 2) {
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T2(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T2(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T2(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T2(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T2(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T2(), duration, warmup, entries);
                         }
                     }
                 } else if (initThreads == 4) {
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T4(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T4(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T4(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T4(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T4(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T4(), duration, warmup, entries);
                         }
                     }
                 }  else if (initThreads == 6) {
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T6(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T6(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T6(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T6(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T6(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T6(), duration, warmup, entries);
                         }
                     }
                 } else if (initThreads == 8) {
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T8(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T8(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T8(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T8(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T8(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T8(), duration, warmup, entries);
                         }
                     }
                 } else if (initThreads == 10) {
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSP2T10(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSP2T10(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP2T10(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP2T10(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP2T10(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP2T10(), duration, warmup, entries);
                         }
                     }
                 } else if (initThreads == 12) {
                     
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T12(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T12(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T12(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T12(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T12(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T12(), duration, warmup, entries);
                         }
                     }
                 } else if (initThreads == 16) {
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T16(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T16(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T16(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T16(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T16(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T16(), duration, warmup, entries);
                         }
                     }
                 } else if (initThreads == 32) {
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T32(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T32(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T32(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T32(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T32(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T32(), duration, warmup, entries);
                         }
                     }
                 } else if (initThreads == 40) {
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T40(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T40(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T40(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T40(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T40(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T40(), duration, warmup, entries);
                         }
                     }
                 } else if (initThreads == 48) {
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T48(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T48(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T48(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T48(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T48(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T48(), duration, warmup, entries);
                         }
                     }
                 } else if (initThreads == 56) {
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T56(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P2T56(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T56(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T56(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T56(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P2T56(), duration, warmup, entries);
                         }
                     }
                 }
@@ -351,61 +352,61 @@ public final class ListServerMP implements SingleExecutable {
             *************************************************/
             } else if (numberPartitions == 4) {
                 if (initThreads == 2) {
-                    replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T2(), duration, warmup);
+                    replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T2(), duration, warmup, entries);
                 } else if (initThreads == 4) {
-                    replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T4(), duration, warmup);
+                    replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T4(), duration, warmup, entries);
                 } else if (initThreads == 8) {
                     //System.out.println("Naive 8T-4S");
                     
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P4T8(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P4T8(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T8(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T8(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T8(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T8(), duration, warmup, entries);
                         }
                     }
                     
                     //replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getNaiveP4T8());
                 }else if (initThreads == 10) {
-                    replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP4T10(), duration, warmup);
+                    replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP4T10(), duration, warmup, entries);
                 } else if (initThreads == 12){
                     //initThreads = 12;
-                    replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T12(), duration, warmup);
+                    replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T12(), duration, warmup, entries);
                 } else if (initThreads == 16){
                     
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P4T16(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P4T16(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T16(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T16(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T16(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T16(), duration, warmup, entries);
                         }
                     }
                     
                 } else if (initThreads == 32){
                                         
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P4T32(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P4T32(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T32(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T32(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T32(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T32(), duration, warmup, entries);
                         }
                     }
                     
                 } else if (initThreads == 40){
                                         
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P4T40(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSM2P4T40(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T40(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T40(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T40(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getM2P4T40(), duration, warmup, entries);
                         }
                     }
                     
@@ -416,19 +417,19 @@ public final class ListServerMP implements SingleExecutable {
             *************************************************/
             } else if (numberPartitions == 6) {
                 if (initThreads == 6) {
-                    replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP6T6(), duration, warmup);
+                    replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP6T6(), duration, warmup, entries);
                 } else if (initThreads == 12) {
                     if(ws){
-                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSP6T12(), stealSize, stealerType, distExpo, duration, warmup);
+                        replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSP6T12(), stealSize, stealerType, distExpo, duration, warmup, entries);
                     } else {
                         if(bwait){
-                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP6T12(), duration, warmup);
+                            replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP6T12(), duration, warmup, entries);
                         } else {
-                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP6T12(), duration, warmup);
+                            replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP6T12(), duration, warmup, entries);
                         }
                     }
                 } else if (initThreads == 10) {
-                    replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP6T10(), duration, warmup);
+                    replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP6T10(), duration, warmup, entries);
                 }else {
                     System.exit(0);
                 }
@@ -437,39 +438,39 @@ public final class ListServerMP implements SingleExecutable {
                 8 SHARDS 
             *************************************************/
             } else if (initThreads == 8) {
-                replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T8(), duration, warmup);
+                replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T8(), duration, warmup, entries);
             } else if (initThreads == 10) {
-                replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T10(), duration, warmup);
+                replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T10(), duration, warmup, entries);
             } else if (initThreads == 16) {
                 if(ws){
-                    replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSP8T16(), stealSize, stealerType, distExpo, duration, warmup);
+                    replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSP8T16(), stealSize, stealerType, distExpo, duration, warmup, entries);
                 } else {
                     if(bwait){
-                        replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T16(), duration, warmup);
+                        replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T16(), duration, warmup, entries);
                     } else {
-                        replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T16(), duration, warmup);
+                        replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T16(), duration, warmup, entries);
                     }
                 }
             } else if (initThreads == 32) {
                 
                 if(ws){
-                    replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSP8T32(), stealSize, stealerType, distExpo, duration, warmup);
+                    replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSP8T32(), stealSize, stealerType, distExpo, duration, warmup, entries);
                 } else {
                     if(bwait){
-                        replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T32(), duration, warmup);
+                        replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T32(), duration, warmup, entries);
                     } else {
-                        replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T32(), duration, warmup);
+                        replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T32(), duration, warmup, entries);
                     }
                 }
             }  else if (initThreads == 40) {
                 
                 if(ws){
-                    replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSP8T40(), stealSize, stealerType, distExpo, duration, warmup);
+                    replica = new WorkStealingServiceReplica(id, this, null, initThreads, WorkStealingMultiPartitionMapping.getWSP8T40(), stealSize, stealerType, distExpo, duration, warmup, entries);
                 } else {
                     if(bwait){
-                        replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T40(), duration, warmup);
+                        replica = new BusyWaitParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T40(), duration, warmup, entries);
                     } else {
-                        replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T40(), duration, warmup);
+                        replica = new ParallelServiceReplica(id, this, null, initThreads, MultipartitionMapping.getP8T40(), duration, warmup, entries);
                     }
                 }
             } else {
@@ -859,6 +860,21 @@ public final class ListServerMP implements SingleExecutable {
             );
             System.exit(-1);
         }
+
+        try {
+            List<GarbageCollectorMXBean> gcMxBeans = ManagementFactory.getGarbageCollectorMXBeans();
+
+            for (GarbageCollectorMXBean gcMxBean : gcMxBeans) {
+                    System.out.println("gcMxBean.getName: "+gcMxBean.getName());
+                    System.out.println("gcMxBean.getObjectName: "+gcMxBean.getObjectName());
+            }
+
+        } catch (RuntimeException re) {
+                throw re;
+        } catch (Exception exp) {
+                throw new RuntimeException(exp);
+        }
+
         
         String [] aargs = args[0].split("-");
 

@@ -25,6 +25,11 @@ import bftsmart.tom.util.TOMUtil;
 import bftsmart.util.MultiOperationRequest;
 import bftsmart.util.ThroughputStatistics;
 import demo.list.ListClientMO;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -52,11 +57,39 @@ public class SequentialServiceReplica extends ServiceReplica {
 
     protected Map<String, MultiOperationCtx> ctxs = new Hashtable<>();
 
-    public SequentialServiceReplica(int id, Executable executor, Recoverable recoverer, int duration, int warmup) {
+    protected int localTotal = 0;
+    protected int localTotalMedidos = 0;
+    boolean continuaMedindoTempos = true;
+    public int TOTAL_REQS_MEDIDOS_TEMPO_EXEC = 1000;
+    long tempos [][] = new long[5][TOTAL_REQS_MEDIDOS_TEMPO_EXEC];
+    int listSize;
+
+    public SequentialServiceReplica(int id, Executable executor, Recoverable recoverer, int duration, int warmup, int listSize) {
         //this(id, executor, recoverer, new DefaultScheduler(initialWorkers));
         super(id, executor, recoverer);
+        this.listSize=listSize;
         statistics = new ThroughputStatistics(id, 1, "results_seq_" + id + ".txt", "SEQ", duration, warmup);
 
+    }
+
+    private void generateFile(){
+        if(id>0) return;
+        System.out.println("Criando arquivo ...");
+        try {
+            PrintWriter pw = new PrintWriter(new FileWriter(new File("seq_"+listSize+"_rep"+id+".txt")));
+
+            for (int i=0; i < localTotalMedidos; i++ ){
+                pw.println(
+                        tempos[0][i]+"\t"+
+                        tempos[1][i]+"\t"+
+                        tempos[2][i]+"\t"+
+                        tempos[3][i]+"\t"+
+                        tempos[4][i]
+                    );
+            }
+            pw.flush();
+
+        } catch (IOException e) {}
     }
 
     @Override
@@ -77,6 +110,8 @@ public class SequentialServiceReplica extends ServiceReplica {
         //int numRequests = 0;
         int consensusCount = 0;
         boolean noop = true;
+
+        long recMessageTime = System.nanoTime();
 
         for (TOMMessage[] requestsFromConsensus : requests) {
             TOMMessage firstRequest = requestsFromConsensus[0];
@@ -111,10 +146,45 @@ public class SequentialServiceReplica extends ServiceReplica {
                         statistics.start();
 
                         for (int i = 0; i < reqs.operations.length; i++) {
-                            MessageContextPair msg = new MessageContextPair(request, reqs.operations[i].classId, i, reqs.operations[i].data);
+                            MessageContextPair msg = new MessageContextPair(request, reqs.operations[i].classId, i, reqs.operations[i].data, firstRequest.decisionTime, recMessageTime);
+                            
+                            long iniExec = System.nanoTime();
                             msg.resp = ((SingleExecutable) executor).executeOrdered(msg.operation, null);
+                            long endExec = System.nanoTime();
+
+                            if(continuaMedindoTempos && localTotal > 10000){
+                
+                                // TIMES ARE CAPTURED IN THE FOLLOWING SEQUENCE:
+                                // --- decision ---- recMsgs ---- scheduled ------ iniExec ------ endexec
+
+                                // recMsg   = recMsgs - decision
+                                // sched    = scheduled - recMsgs
+                                // waitExec = iniExec - scheduled
+                                // exec     = endExec - iniExec
+                                // total    = endexec - decision
+                                long tempoTotal = endExec - msg.decisionTime;
+                                long tempoRecMsgs = msg.recMsgTime - msg.decisionTime;
+                                long tempoSchedule = 0;
+                                long tempoWaitForExec = 0;
+                                long tempoExec = endExec - iniExec;
+
+                                tempos[0][localTotalMedidos] = tempoRecMsgs;
+                                tempos[1][localTotalMedidos] = tempoSchedule;
+                                tempos[2][localTotalMedidos] = tempoWaitForExec;
+                                tempos[3][localTotalMedidos] = tempoExec;
+                                tempos[4][localTotalMedidos] = tempoTotal;
+                
+                                localTotalMedidos++;
+                                if(localTotalMedidos == TOTAL_REQS_MEDIDOS_TEMPO_EXEC ){
+                                    continuaMedindoTempos = false;
+                                    generateFile();
+                                }
+                            }
+
                             ctx.add(msg.index, msg.resp);
                             statistics.computeStatistics(0, 1);
+
+                            localTotal++;
 
                         }
                         ctx.request.reply = new TOMMessage(id, ctx.request.getSession(),

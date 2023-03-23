@@ -65,7 +65,7 @@ public class ThroughputStatistics {
         try {
 
             pw = new PrintWriter(new FileWriter(new File(filePath)));
-            pwStealMatrix = new PrintWriter(new FileWriter(new File("stealMatrix_"+print+"_"+id+".txt")));
+            //pwStealMatrix = new PrintWriter(new FileWriter(new File("stealMatrix_"+print+"_"+id+".txt")));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -96,14 +96,14 @@ public class ThroughputStatistics {
         }
         pw.flush();
         
-        for (int ii = 0; ii < numT; ii++) {
-            pwStealMatrix.print("t"+ii+ "\t");
-            for (int jj = 0; jj < numT; jj++) {
-                pwStealMatrix.print(stealMatrix[ii][jj] + "\t");
-            }
-            pwStealMatrix.println("");
-        }
-        pwStealMatrix.flush();
+        // for (int ii = 0; ii < numT; ii++) {
+        //     pwStealMatrix.print("t"+ii+ "\t");
+        //     for (int jj = 0; jj < numT; jj++) {
+        //         pwStealMatrix.print(stealMatrix[ii][jj] + "\t");
+        //     }
+        //     pwStealMatrix.println("");
+        // }
+        // pwStealMatrix.flush();
         
         //if(id == 0){
         //    loadTP("results_0.txt");
@@ -204,7 +204,7 @@ public class ThroughputStatistics {
 
         //System.out.println("Throughput at " + print + " = " + tp + " operations/sec in sec : " + now);
         System.out.println(
-            print + " Throughput at " + tp + " ops/sec; "
+            print + " Throughput at " + tp + " ops/sec; " + tpStolen + " stolen ops/sec; "
             //+ "Sync at " +totalSync +"/" + totalCmds +" = "+ ((100 * totalSync) / (totalCmds > 0 ? totalCmds : 1)) + "% of all ops; "
             + "in sec : " + now
         );
@@ -212,7 +212,7 @@ public class ThroughputStatistics {
 
     }
 
-    boolean stoped = true;
+    public boolean stoped = true;
     int fakenow = 0;
     public void start() {
         if (!started) {

@@ -5,6 +5,11 @@ import bftsmart.tom.server.Executable;
 import bftsmart.tom.server.Recoverable;
 import bftsmart.tom.server.SingleExecutable;
 import bftsmart.util.ThroughputStatistics;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -30,6 +35,8 @@ public final class WorkStealingServiceReplica extends ParallelServiceReplica {
     private final Semaphore[][] semaphores;
     private final int stealSize;
     private String stealerType;
+
+    int listSize;
     
     public WorkStealingServiceReplica(
             int id, Executable executor, Recoverable recoverer, int initialWorkers, int stealSize, String stealerType, boolean distExpo,
@@ -66,15 +73,14 @@ public final class WorkStealingServiceReplica extends ParallelServiceReplica {
     
     public WorkStealingServiceReplica(
             int id, Executable executor, Recoverable recoverer, int initialWorkers, ClassToThreads[] cts, int stealSize, 
-            String stealerType, boolean distExpo, int duration, int warmup
+            String stealerType, boolean distExpo, int duration, int warmup, int listSize
     ) {
         super(id, executor, recoverer, cts);
         this.exec_flags = new boolean[initialWorkers];
         this.markers = new AtomicInteger[initialWorkers][initialWorkers];
         this.sync_marker = new AtomicInteger[100][2];                       // sparse matrix, 'cause the class ids does not start at zero
         this.semaphores = new Semaphore[initialWorkers][initialWorkers];
-        
-        
+        this.listSize = listSize;
         
         this.scheduler = new WorkStealingScheduler(initialWorkers, cts, id, distExpo);
         this.stealSize = stealSize;
@@ -183,6 +189,10 @@ public final class WorkStealingServiceReplica extends ParallelServiceReplica {
         protected int localConc = 0;
         protected int localSync = 0;
         protected int localTotal = 0;
+        protected int localTotalMedidos = 0;
+        boolean continuaMedindoTempos = true;
+
+        long tempos [][] = new long[5][TOTAL_REQS_MEDIDOS_TEMPO_EXEC];
 
         public ServiceReplicaSmartStealer(BlockingQueue[] requests_queues, int thread_id, int numWorkers) {
             this.thread_id = thread_id;
@@ -204,7 +214,42 @@ public final class WorkStealingServiceReplica extends ParallelServiceReplica {
         }
         
         protected void execute(MessageContextPair msg){
+
+            long iniExec = System.nanoTime();
+
             msg.resp = ((SingleExecutable) executor).executeOrdered(msg.operation, null);
+            
+            long endExec = System.nanoTime();
+
+            if(continuaMedindoTempos && localTotal > (TOTAL_REQS_MEDIDOS_TEMPO_EXEC)){
+
+                // TIMES ARE CAPTURED IN THE FOLLOWING SEQUENCE:
+                // --- decision ---- recMsgs ---- scheduled ------ iniExec ------ endexec
+
+                // recMsg   = recMsgs - decision
+                // sched    = scheduled - recMsgs
+                // waitExec = iniExec - scheduled
+                // exec     = endExec - iniExec
+                // total    = endexec - decision
+                long tempoTotal = endExec - msg.decisionTime;
+                long tempoRecMsgs = msg.recMsgTime - msg.decisionTime;
+                long tempoSchedule = msg.scheduledTime - msg.recMsgTime;
+                long tempoWaitForExec = iniExec - msg.scheduledTime;
+                long tempoExec = endExec - iniExec;
+
+                tempos[0][localTotalMedidos] = tempoRecMsgs;
+                tempos[1][localTotalMedidos] = tempoSchedule;
+                tempos[2][localTotalMedidos] = tempoWaitForExec;
+                tempos[3][localTotalMedidos] = tempoExec;
+                tempos[4][localTotalMedidos] = tempoTotal;
+
+                localTotalMedidos++;
+                if(localTotalMedidos == TOTAL_REQS_MEDIDOS_TEMPO_EXEC ){
+                    continuaMedindoTempos = false;
+                    generateFile();
+                }
+            }
+
             MultiOperationCtx ctx = ctxs.get(msg.request.toString());
             ctx.add(msg.index, msg.resp);
             if (ctx.response.isComplete() && !ctx.finished && (ctx.interger.getAndIncrement() == 0)) {
@@ -216,10 +261,69 @@ public final class WorkStealingServiceReplica extends ParallelServiceReplica {
                 replier.manageReply(ctx.request, null);
             }
             statistics.computeStatistics(thread_id, 1);
+
+            localTotal++;
+
+        }
+
+        private void generateFile(){
+            if(id > 0) return;
+            if(thread_id > 0) return;
+            System.out.println(thread_id + " - Criando arquivo ...");
+            try {
+                PrintWriter pw = new PrintWriter(new FileWriter(new File("ws_"+listSize+"_rep"+id+"_thread_"+thread_id+".txt")));
+
+                for (int i=0; i < localTotalMedidos; i++ ){
+                    pw.println(
+                        tempos[0][i]+"\t"+
+                        tempos[1][i]+"\t"+
+                        tempos[2][i]+"\t"+
+                        tempos[3][i]+"\t"+
+                        tempos[4][i]
+                    );
+                }
+                pw.flush();
+
+            } catch (IOException e) {}
         }
 
         protected void execute(MessageContextPair msg, int victim){
+
+            long iniExec = System.nanoTime();
             msg.resp = ((SingleExecutable) executor).executeOrdered(msg.operation, null);
+            long endExec = System.nanoTime();
+
+            if(continuaMedindoTempos && localTotal > TOTAL_REQS_MEDIDOS_TEMPO_EXEC){
+                
+                // TIMES ARE CAPTURED IN THE FOLLOWING SEQUENCE:
+                // --- decision ---- recMsgs ---- scheduled ------ iniExec ------ endexec
+
+                // recMsg   = recMsgs - decision
+                // sched    = scheduled - recMsgs
+                // waitExec = iniExec - scheduled
+                // exec     = endExec - iniExec
+                // total    = endexec - decision
+                long tempoTotal = endExec - msg.decisionTime;
+                long tempoRecMsgs = msg.recMsgTime - msg.decisionTime;
+                long tempoSchedule = msg.scheduledTime - msg.recMsgTime;
+                long tempoWaitForExec = iniExec - msg.scheduledTime;
+                long tempoExec = endExec - iniExec;
+
+                tempos[0][localTotalMedidos] = tempoRecMsgs;
+                tempos[1][localTotalMedidos] = tempoSchedule;
+                tempos[2][localTotalMedidos] = tempoWaitForExec;
+                tempos[3][localTotalMedidos] = tempoExec;
+                tempos[4][localTotalMedidos] = tempoTotal;
+
+                localTotalMedidos++;
+                if(localTotalMedidos == TOTAL_REQS_MEDIDOS_TEMPO_EXEC ){
+                    continuaMedindoTempos = false;
+                    generateFile();
+                }
+            }
+
+            //  
+
             MultiOperationCtx ctx = ctxs.get(msg.request.toString());
             ctx.add(msg.index, msg.resp);
             if (ctx.response.isComplete() && !ctx.finished && (ctx.interger.getAndIncrement() == 0)) {
@@ -232,6 +336,9 @@ public final class WorkStealingServiceReplica extends ParallelServiceReplica {
             }
             
             statistics.computeStatistics(thread_id, 1, victim);
+
+            localTotal++;
+
         }
         
         protected void steal(ExecutionFIFOQueue<MessageContextPair> stealQueue, int classId){

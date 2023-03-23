@@ -79,7 +79,7 @@ public class CBASEScheduler implements Scheduler{
     public void scheduleReplicaReconfiguration() {
         
         TOMMessage reconf = new TOMMessage(0, 0, 0,0, null, 0, TOMMessageType.ORDERED_REQUEST, ParallelMapping.CONFLICT_RECONFIGURATION);
-        MessageContextPair m = new MessageContextPair(reconf, ParallelMapping.CONFLICT_RECONFIGURATION, -1, null);
+        MessageContextPair m = new MessageContextPair(reconf, ParallelMapping.CONFLICT_RECONFIGURATION, -1, null, -1);
         
         schedule(m);
         

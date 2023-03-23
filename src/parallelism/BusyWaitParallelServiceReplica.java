@@ -30,8 +30,8 @@ public class BusyWaitParallelServiceReplica extends ParallelServiceReplica {
         
     }
     
-    public BusyWaitParallelServiceReplica(int id, Executable executor, Recoverable recoverer, int initialWorkers, ClassToThreads[] cts, int duration, int warmup) {
-        super(id, executor, recoverer, initialWorkers, cts, duration, warmup);
+    public BusyWaitParallelServiceReplica(int id, Executable executor, Recoverable recoverer, int initialWorkers, ClassToThreads[] cts, int duration, int warmup, int listSize) {
+        super(id, executor, recoverer, initialWorkers, cts, duration, warmup, listSize);
         this.sync_marker = new AtomicInteger[100][2];   // sparse matrix, 'cause the class ids does not start at zero
         for(ClassToThreads cc : scheduler.getMapping().getClasses()){
             if(cc != null){
@@ -73,11 +73,11 @@ public class BusyWaitParallelServiceReplica extends ParallelServiceReplica {
                         msg = execQueue.getNext();
                         ClassToThreads ct = scheduler.getMapping().getClass(msg.classId);
                         if (ct.type == ClassToThreads.CONC) {
-                            exec(msg);
+                            exec(msg, true);
                             localConc++;
                         } else if (ct.type == ClassToThreads.SYNC && ct.tIds.length == 1) {
                             //SYNC mas só com 1 thread, não precisa usar barreira
-                            exec(msg);
+                            exec(msg, true);
                             localSync++;
                         } else if (ct.type == ClassToThreads.SYNC) {
                             localSync++;
@@ -96,7 +96,7 @@ public class BusyWaitParallelServiceReplica extends ParallelServiceReplica {
                             // signal that arrives to this cycle
                             if(sync_marker[msg.classId][cycles[msg.classId]].incrementAndGet() == ct.tIds.length){
                                 // if was the last to arrive, execute
-                                exec(msg);
+                                exec(msg, true);
                                 
                                 sync_marker[msg.classId][cycles[msg.classId]].set(0); // signal the end of this cycle - resets variable for next use
                             }

@@ -1,0 +1,6 @@
+
+
+-XX:+UseSerialGC            MarkSweepCompact
+-XX:+UseParallelGC          PS MarkSweep / PS Scavenge
+-XX:+UseG1GC                G1 Young Generation
+-XX:+UseConcMarkSweepGC     ConcurrentMarkSweep

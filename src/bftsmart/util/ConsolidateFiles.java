@@ -232,26 +232,26 @@ public class ConsolidateFiles {
         if(shards == 4) nthreadsaux = 9;
         if(shards == 8) nthreadsaux = 17;
         
-        //if(!this.wsVersions){
-            //if(threads < nthreadsaux ){
-                ret = consolidateFile(dir+"/results_seq_"+replica+".txt");
-                pw.print("\"SEQ\"\t"+ret[0]+"\t"+ret[1]+"\r\n");
-                pw2.print("\"SEQ\"\t"+ret[2]+"\t"+ret[3]+"\r\n");
-                String seq = "1"+"\t"+ret[0]+"\t"+ret[1]+"\r\n";
-                Files.write(Paths.get(dirRootCons+"seq"+fileName), seq.getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
-            //}
-            ret = consolidateFile(dir+"/results_cbase_"+replica+".txt");
-            pw.print("\"CBASE\"\t"+ret[0]+"\t"+ret[1]+"\r\n");
-            pw2.print("\"CBASE\"\t"+ret[2]+"\t"+ret[3]+"\r\n");
-            String cbase = coluna0+"\t"+ret[0]+"\t"+ret[1]+"\r\n";
-            Files.write(Paths.get(dirRootCons+"cbase"+fileName), cbase.getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+    //     //if(!this.wsVersions){
+    //         //if(threads < nthreadsaux ){
+    //             ret = consolidateFile(dir+"/results_seq_"+replica+".txt");
+    //             pw.print("\"SEQ\"\t"+ret[0]+"\t"+ret[1]+"\r\n");
+    //             pw2.print("\"SEQ\"\t"+ret[2]+"\t"+ret[3]+"\r\n");
+    //             String seq = "1"+"\t"+ret[0]+"\t"+ret[1]+"\r\n";
+    //             Files.write(Paths.get(dirRootCons+"seq"+fileName), seq.getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+    //         //}
+    //         ret = consolidateFile(dir+"/results_cbase_"+replica+".txt");
+    //         pw.print("\"CBASE\"\t"+ret[0]+"\t"+ret[1]+"\r\n");
+    //         pw2.print("\"CBASE\"\t"+ret[2]+"\t"+ret[3]+"\r\n");
+    //         String cbase = coluna0+"\t"+ret[0]+"\t"+ret[1]+"\r\n";
+    //         Files.write(Paths.get(dirRootCons+"cbase"+fileName), cbase.getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
 
-            ret = consolidateFile(dir+"/results_busyWait_"+replica+".txt");
-            pw.print("\"Early Busy Wait\"\t"+ret[0]+"\t"+ret[1]+"\t"+ret[4]+"\t"+ret[5]+"\r\n");
-            pw2.print("\"Early Busy Wait\"\t"+ret[2]+"\t"+ret[3]+"\r\n");
-            String bwait = coluna0+"\t"+ret[0]+"\t"+ret[1]+"\t"+ret[4]+"\t"+ret[5]+"\r\n";
-            Files.write(Paths.get(dirRootCons+"earlybw"+fileName), bwait.getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
-       // }
+    //         ret = consolidateFile(dir+"/results_busyWait_"+replica+".txt");
+    //         pw.print("\"Early Busy Wait\"\t"+ret[0]+"\t"+ret[1]+"\t"+ret[4]+"\t"+ret[5]+"\r\n");
+    //         pw2.print("\"Early Busy Wait\"\t"+ret[2]+"\t"+ret[3]+"\r\n");
+    //         String bwait = coluna0+"\t"+ret[0]+"\t"+ret[1]+"\t"+ret[4]+"\t"+ret[5]+"\r\n";
+    //         Files.write(Paths.get(dirRootCons+"earlybw"+fileName), bwait.getBytes(StandardCharsets.UTF_8),StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+    //    // }
         
         ret = consolidateFile(dir+"/results_early_"+replica+".txt");
         pw.print("\"Early Scheduling\"\t"+ret[0]+"\t"+ret[1]+"\t"+ret[4]+"\t"+ret[5]+"\r\n");

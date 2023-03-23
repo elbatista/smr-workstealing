@@ -25,6 +25,11 @@ import bftsmart.tom.util.TOMUtil;
 import bftsmart.util.MultiOperationRequest;
 import bftsmart.util.ThroughputStatistics;
 import demo.list.ListClientMO;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -49,6 +54,9 @@ public class ParallelServiceReplica extends ServiceReplica {
 
     protected Scheduler scheduler;
     public ThroughputStatistics statistics;
+
+    public int TOTAL_REQS_MEDIDOS_TEMPO_EXEC = 2000;
+    private int listSize;
 
     protected Map<String, MultiOperationCtx> ctxs = new Hashtable<>();
     
@@ -99,13 +107,14 @@ public class ParallelServiceReplica extends ServiceReplica {
         initWorkers(this.scheduler.getNumWorkers(), id, duration, warmup);
     }
     
-    public ParallelServiceReplica(int id, Executable executor, Recoverable recoverer, int initialWorkers, ClassToThreads[] cts, int duration, int warmup) {
+    public ParallelServiceReplica(int id, Executable executor, Recoverable recoverer, int initialWorkers, ClassToThreads[] cts, int duration, int warmup, int listSize) {
         //this(id, executor, recoverer, new DefaultScheduler(initialWorkers));
         super(id, executor, recoverer);
         if (initialWorkers <= 0) {
             initialWorkers = 1;
         }
-        
+        this.listSize = listSize;
+
         this.scheduler = new DefaultScheduler(initialWorkers, cts);
 
         initWorkers(this.scheduler.getNumWorkers(), id, duration, warmup);
@@ -194,8 +203,13 @@ public class ParallelServiceReplica extends ServiceReplica {
         int consensusCount = 0;
         boolean noop = true;
 
+        long recMessageTime = System.nanoTime();
+
         for (TOMMessage[] requestsFromConsensus : requests) {
             TOMMessage firstRequest = requestsFromConsensus[0];
+
+            
+
             //int requestCount = 0;
             noop = true;
             for (TOMMessage request : requestsFromConsensus) {
@@ -226,8 +240,9 @@ public class ParallelServiceReplica extends ServiceReplica {
                         this.ctxs.put(request.toString(), ctx);
 
                         statistics.start();
+                        
                         for (int i = 0; i < reqs.operations.length; i++) {
-                            this.scheduler.schedule(new MessageContextPair(request, reqs.operations[i].classId, i, reqs.operations[i].data));
+                            this.scheduler.schedule(new MessageContextPair(request, reqs.operations[i].classId, i, reqs.operations[i].data, firstRequest.decisionTime, recMessageTime));
                         }
 
                     } else if (request.getReqType() == TOMMessageType.RECONFIG) {
@@ -411,9 +426,72 @@ public class ParallelServiceReplica extends ServiceReplica {
         protected int localConc = 0;
         protected int localSync = 0;
         protected int localTotal = 0;
+
+        protected int localTotalMedidos = 0;
+        boolean continuaMedindoTempos = true;
+
+        long tempos [][] = new long[5][TOTAL_REQS_MEDIDOS_TEMPO_EXEC];
+
+
+        private void generateFile(boolean busyWait){
+            if(id>0) return;
+            if(thread_id > 0) return;
+            System.out.println(thread_id + " - Criando arquivo ...");
+            try {
+                PrintWriter pw = new PrintWriter(new FileWriter(new File((busyWait?"busywait_":"early_")+listSize+"_rep"+id+"_thread_"+thread_id+".txt")));
+
+                for (int i=0; i < localTotalMedidos; i++ ){
+                    pw.println(
+                        tempos[0][i]+"\t"+
+                        tempos[1][i]+"\t"+
+                        tempos[2][i]+"\t"+
+                        tempos[3][i]+"\t"+
+                        tempos[4][i]
+                    );
+                }
+                pw.flush();
+
+            } catch (IOException e) {}
+        }
         
-        public void exec(MessageContextPair msg){
+        public void exec(MessageContextPair msg, boolean busyWait){
+
+            long iniExec = System.nanoTime();
+
             msg.resp = ((SingleExecutable) executor).executeOrdered(msg.operation, null);
+
+            long endExec = System.nanoTime();
+
+            if(continuaMedindoTempos && localTotal > TOTAL_REQS_MEDIDOS_TEMPO_EXEC){
+                
+                // TIMES ARE CAPTURED IN THE FOLLOWING SEQUENCE:
+                // --- decision ---- recMsgs ---- scheduled ------ iniExec ------ endexec
+
+                // recMsg   = recMsgs - decision
+                // sched    = scheduled - recMsgs
+                // waitExec = iniExec - scheduled
+                // exec     = endExec - iniExec
+                // total    = endexec - decision
+                long tempoRecMsgs = msg.recMsgTime - msg.decisionTime;
+                long tempoSchedule = msg.scheduledTime - msg.recMsgTime;
+                long tempoWaitForExec = iniExec - msg.scheduledTime;
+                long tempoExec = endExec - iniExec;
+                long tempoTotal = endExec - msg.decisionTime;
+
+                tempos[0][localTotalMedidos] = tempoRecMsgs;
+                tempos[1][localTotalMedidos] = tempoSchedule;
+                tempos[2][localTotalMedidos] = tempoWaitForExec;
+                tempos[3][localTotalMedidos] = tempoExec;
+                tempos[4][localTotalMedidos] = tempoTotal;
+
+                localTotalMedidos++;
+                if(localTotalMedidos == TOTAL_REQS_MEDIDOS_TEMPO_EXEC ){
+                    continuaMedindoTempos = false;
+                    generateFile(busyWait);
+                }
+            }
+
+
             MultiOperationCtx ctx = ctxs.get(msg.request.toString());
             ctx.add(msg.index, msg.resp);
             if (ctx.response.isComplete() && !ctx.finished && (ctx.interger.getAndIncrement() == 0)) {
@@ -425,6 +503,8 @@ public class ParallelServiceReplica extends ServiceReplica {
                 replier.manageReply(ctx.request, null);
             }
             statistics.computeStatistics(thread_id, 1);
+
+            localTotal++;
         }
         
         public void run() {
@@ -458,17 +538,17 @@ public class ParallelServiceReplica extends ServiceReplica {
                             //sleep(5000);
                             //System.exit(0);
                             localConc++;
-                            exec(msg);
+                            exec(msg, false);
 
                         } else if (ct.type == ClassToThreads.SYNC && ct.tIds.length == 1) {//SYNC mas só com 1 thread, não precisa usar barreira
                             localSync++;
-                            exec(msg);
+                            exec(msg, false);
                         } else if (ct.type == ClassToThreads.SYNC) {
                             localSync++;
                             if (thread_id == scheduler.getMapping().getExecutorThread(msg.classId)) {
                                 scheduler.getMapping().getBarrier(msg.classId).await();
                                 // System.out.println("Thread " + thread_id + " );
-                                exec(msg);
+                                exec(msg, false);
                                 
                                 scheduler.getMapping().getBarrier(msg.classId).await();
                             } else {
